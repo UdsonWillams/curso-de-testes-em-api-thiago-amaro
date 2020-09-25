@@ -1,96 +1,85 @@
+import io.restassured.RestAssured;
 import io.restassured.response.Response;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
 
 
-public class TesteTheCatApi {
+public class TesteTheCatApi extends MassaDeDados{
 
-    String vote_id;
+
+
+    //Anotação junit informa que esse metodo precisa ser executado antes de todos os metodos
+    @BeforeClass
+    public static void urlbase(){
+        RestAssured.baseURI = "https://api.thecatapi.com/v1/";
+    }
+    //Teste de cadastro e recebimento de chave da API do TheCatAPI
     @Test
     public void cadastro() {
-
-        String url = "https://api.thecatapi.com/v1/user/passwordlesssignup";
-        String corpo = "{\"email\": \"teste@gmail.com\", \"appDescription\": \"teste the cat api\"}";
-        //DADO QUE
-        //GIVEN
-        //QUANDO ESTIVER COM
-        //WHEN
-        //ENTÃO
-        //THEN
-        Response response = given().contentType("application/json").body(corpo).
-        when().post(url);
-
-        response.then().body("message", containsString("SUCCESS")).statusCode(200);
-
-        System.out.println("RETORNO => " + response.body().asString());
+        Response response = given().contentType("application/json").body(corpoCadastro).
+        when().post(urlCadastro);
+        validacao(response);
     }
+    //Teste de votação na página do TheCatAPI
     @Test
     public void votacao() {
-
-        String url = "https://api.thecatapi.com/v1/votes/";
-
         Response response = given().contentType("application/json")
-                .body("{\"image_id\":\"d01\",\"value\":true,\"sub_id\":\"demo-d754d8\"}").
-                when().post(url);
+                .body(corpoVotacao).
+                when().post("votes/");
+                validacao(response);
 
-        response.then().body("message", containsString("SUCCESS")).statusCode(200);
-
-        System.out.println("RETORNO => " + response.body().asString());
         String id = response.jsonPath().getString("id");
         vote_id = id;
-        System.out.println("RETORNO => " + id);
     }
-    //@Test
-    //public void deletaVotacao(){
-   //     votacao();
-   //     deletaVoto();
-    //}
-    @Test
+
+    /*** @Test >>>> ESTE TESTE NÃO FUNCIONA DEVIDO A ALGUM PROBLEMA DA API UTILIZADA.
     public void deletaVoto() {
-        String url = "https://api.thecatapi.com/v1/votes/{vote_id}";
+        String url = "votes/{vote_id}";
         Response response =
                 given()
                 .contentType("application/json")
-                .header("x-api-key", "$$.env.x-api-key")
+                .header(api, chave)
                 .pathParam("vote_id", vote_id)
                 .when().delete(url);
-        System.out.println("RETORNO => " + response.body().asString());
-        response.then().body("message", containsString("SUCCESS")).statusCode(200);
-
-    }
+                validacao(response);
+    }***/
+    //Teste de favoritar e desfavoritar fotos no site do TheCatAPI
     @Test
     public void favoritaDesfavorita(){
         favorita();
         desfavorita();
     }
+    //Metodo para favoritar as fotos
     public void favorita() {
 
         Response response =
                  given()
                 .contentType("application/json")
-                .header("x-api-key", "5bb18b8c-e8a9-4c64-8508-7b576554b23f")
-                .body("{\"image_id\": \"H0T5RQVp0\"}")
-                .when().post("https://api.thecatapi.com/v1/favourites");
+                .header(api, chave)
+                .body(corpoFavorita)
+                .when().post("favourites");
                 String id = response.jsonPath().getString("id");
                 vote_id = id;
-
-                System.out.println(vote_id);
-                System.out.println("RETORNO FAVORITA => " + response.body().asString());
-                response.then().statusCode(200).body("message", containsString("SUCCESS"));
-
+                validacao(response);
     }
+    //Metodo de desfavoritar as fotos
     public void desfavorita() {
 
         Response response =
                 given()
                 .contentType("application/json")
-                .header("x-api-key", "5bb18b8c-e8a9-4c64-8508-7b576554b23f")
+                .header(api, chave)
                 .pathParam("favourite_id", vote_id)
-                .when().delete("https://api.thecatapi.com/v1/favourites/{favourite_id}");
+                .when().delete(corpoDesfavorita);
+                validacao(response);
+    }
+    public void validacao(Response response){
 
-                System.out.println("RETORNO DESFAVORITA => " + response.body().asString());
-                response.then().statusCode(200).body("message", containsString("SUCCESS"));
+        response.then().statusCode(200).body("message", containsString("SUCCESS"));
+        System.out.println("RETORNO DA API => " + response.body().asString());
+        System.out.println("------------------------------------------------------------------");
     }
 }

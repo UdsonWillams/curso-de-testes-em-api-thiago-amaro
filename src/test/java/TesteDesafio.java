@@ -1,11 +1,17 @@
+import io.restassured.RestAssured;
 import io.restassured.response.Response;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.containsString;
 
-public class TesteDesafio {
-    String vote_id;
+public class TesteDesafio extends MassaDeDados {
+
+    @BeforeClass
+    public static void urlbase(){
+        RestAssured.baseURI = "https://api.thecatapi.com/v1/";
+    }
 
     @Test
     public void favoritaDesfavorita(){
@@ -17,28 +23,31 @@ public class TesteDesafio {
 
         Response response =
                 given()
-                        .contentType("application/json")
-                        .header("x-api-key", "5bb18b8c-e8a9-4c64-8508-7b576554b23f")
-                        .body("{\"image_id\": \"H0T5RQVp0\"}")
-                        .when().post("https://api.thecatapi.com/v1/favourites");
-        String id = response.jsonPath().getString("id");
-        vote_id = id;
-
-        System.out.println(vote_id);
-        System.out.println("RETORNO FAVORITA => " + response.body().asString());
-        response.then().statusCode(200).body("message", containsString("SUCCESS"));
+                .contentType("application/json")
+                .header(api, chave)
+                .body(corpoFavorita)
+                .when().post("favourites");
+                String id = response.jsonPath().getString("id");
+                vote_id = id;
+                validacao(response);
 
     }
+
     public void desfavorita() {
 
         Response response =
                 given()
-                        .contentType("application/json")
-                        .header("x-api-key", "5bb18b8c-e8a9-4c64-8508-7b576554b23f")
-                        .pathParam("favourite_id", vote_id)
-                        .when().delete("https://api.thecatapi.com/v1/favourites/{favourite_id}");
+                .contentType("application/json")
+                .header(api, chave)
+                .pathParam("favourite_id", vote_id)
+                .when().delete(corpoDesfavorita);
+                validacao(response);
+    }
 
-        System.out.println("RETORNO DESFAVORITA => " + response.body().asString());
+    public void validacao(Response response){
+
         response.then().statusCode(200).body("message", containsString("SUCCESS"));
+        System.out.println("RETORNO DA API => " + response.body().asString());
+        System.out.println("------------------------------------------------------------------");
     }
 }
